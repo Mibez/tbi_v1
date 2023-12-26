@@ -9,7 +9,7 @@ project(${PROJECT_NAME})
 set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -std=c99")
 
 # Include paths
-set(INCLUDE_DIRS ${INCLUDE_DIRS} ${PROJECT_SOURCE_DIR}/lib)
+set(INCLUDE_DIRS ${INCLUDE_DIRS} ${PROJECT_SOURCE_DIR}/lib ${PROJECT_SOURCE_DIR}/generated)
 
 # Assign the include directories
 include_directories(${INCLUDE_DIRS})

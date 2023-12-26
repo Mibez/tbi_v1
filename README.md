@@ -76,6 +76,13 @@ and finally the data, represented in the number of bits as defined by format spe
 The DCB frame format may be changed mid-frame with a new definition. This allows for representing non-changing periods of time series data very efficiently, with an entire data structure represented by only the time difference, or even 0 bits, if timestamp is not a member of the data. The TBI frame constructor automatically chooses the frame formats to send the data in least number of bits
 
 ## Building
+
+Before building, create a message spec (see utils/example.json) and compose a specification header file
+```
+python3 utils/compose.py <path to message spec>
+```
+This will generate a header file in generated/messagespec.h
+
 To build the library and test clients, perform the following commands:
 
 ```
