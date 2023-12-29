@@ -12,8 +12,7 @@
         "bundle": true,
         "id": 1,
         "data_types": {
-            "time_s": 0,
-            "time_ms": 1,
+            "time": 1,
             "acc_x": 7,
             "acc_y": 7,
             "acc_z": 7

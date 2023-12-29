@@ -37,6 +37,7 @@ def generate_begin(path: str = OUT_PATH) -> bool:
 #define __MESSAGESPEC_H
 
 #include <stdint.h>
+#include <stdlib.h>
 #include "tbi_types.h"
 #include "tbi.h"\n\n""")
     except Exception as e:
@@ -52,6 +53,7 @@ def generate_enum(spec: dict, path: str = OUT_PATH) -> bool:
     debug("Generating message type enumerations...")
     try:
         with open(path, "a") as f:
+            f.write("/** @brief Message name enumeration, values are IDs */\n")
             f.write("typedef enum {\n")
             bundles: list = []
             k: str
@@ -67,7 +69,7 @@ def generate_enum(spec: dict, path: str = OUT_PATH) -> bool:
             f.write("} msgspec_types_t;\n\n")
             f.write(f"const int msgspec_types_len = {len(spec.keys())};\n")
             f.write(f"const int msgspec_bundle_types_len = {len(bundles)};\n")
-            f.write(f"const uint8_t msgspec_bundle_types = {{ {','.join(bundles)} }};\n\n")
+            f.write(f"const uint8_t msgspec_bundle_types = {{ {','.join(bundles)} }};\n")
 
     except Exception as e:
         print(f"Error in generate_enum: {repr(e)}")
@@ -82,6 +84,7 @@ def generate_structs(spec: dict, path: str = OUT_PATH) -> bool:
     try:
         with open(path, "a") as f:
         
+            f.write("\n/** @brief Convenience structs for sending telemetry */\n")
             k: str
             v: dict
             for k,v in spec.items():
@@ -106,13 +109,89 @@ def generate_functions(spec: dict, path: str = OUT_PATH) -> bool:
     debug("Generating function declarations...")
     try:
         with open(path, "a") as f:
-        
+            f.write("/** @brief conviniency functions for sending telemetry */")
             k: str
             for k in spec.keys():
-                f.write(f"\nint tbi_send_{k}(msgspec_{k}_t *value);\n")
+                f.write(f"\nint tbi_send_{k}(tbi_ctx_t* tbi, msgspec_{k}_t *value)\n")
+                f.write("{\n")
+                f.write(f"\treturn tbi_telemetry_schedule(tbi, {k.upper()}, (void*)value);\n")
+                f.write("}\n")
 
     except Exception as e:
         print(f"Error in generate_structs: {repr(e)}")
+        return False
+    return True
+
+def generate_machine_format_arrays(spec: dict, path: str = OUT_PATH) -> bool:
+    """
+        Generate machine readable format arrays
+    """
+    debug("Generating format arrays...")
+    try:
+        with open(path, "a") as f:
+            f.write("\n/** @brief Machine understandable format for message specs */")
+            k: str
+            v: dict
+            for k, v in spec.items():
+                datatypes = []
+                for _, datatype in v.get("data_types", {}).items():
+                    if datatype not in TYPES:
+                        print(f"Error in format array generation for {k}: unknown type {datatype}")
+                        return False
+                    datatypes.append(str(datatype))
+                
+                f.write(f"\nconst uint8_t msgspec_binary_{k}[] = {{ {', '.join(datatypes)} }};")
+    except Exception as e:
+        print(f"Error in generate_machine_format_arrays: {repr(e)}")
+        return False
+    return True
+
+def generate_message_type_contexts(spec: dict, path: str = OUT_PATH) -> bool:
+    """
+        Generate type context structs
+    """
+    debug("Generating message type contexts...")
+    try:
+        with open(path, "a") as f:
+            f.write("\n\n/** @brief Initialize message context for each type */\n")
+            f.write("tbi_msg_ctx_t msgspec_ctxs[] = {\n")
+            k: str
+            v: dict
+            for k, v in spec.items():
+                f.write("\t{\n")
+                f.write(f"\t\t.msgtype = {k.upper()},\n")
+                f.write(f"\t\t.format_len = sizeof(msgspec_binary_{k}) / sizeof(uint8_t),\n")
+                f.write(f"\t\t.format = &msgspec_binary_{k}[0],\n")
+                f.write(f"\t\t.buflen = 0,\n")
+                f.write(f"\t\t.head = NULL,\n")
+                f.write("\t},\n")
+            
+            f.write("};\n")
+            f.write(f"const int msgspec_ctxs_len = {len(spec.keys())};\n")
+
+    except Exception as e:
+        print(f"Error in generate_message_type_contexts: {repr(e)}")
+        return False
+    return True
+
+def generate_register_msgspec_fn(spec: dict, path: str = OUT_PATH) -> bool:
+    """
+        Generate tbi_register_msgspec function
+    """
+    debug("Generating tbi_register_msgspec function...")
+    try:
+        with open(path, "a") as f:
+            # This fn is just constant at least for now
+            f.write("\n\n/** @brief register message spec with tbi context */\n")
+            f.write("int tbi_register_msgspec(tbi_ctx_t* tbi)\n")
+            f.write("{\n")
+            f.write("\ttbi->msg_ctxs = &msgspec_ctxs[0];\n")
+            f.write("\ttbi->msg_ctxs_len = msgspec_ctxs_len;\n")
+            f.write("\treturn 0;\n")
+            f.write("}\n")
+
+    except Exception as e:
+        print(f"Error in generate_register_msgspec_fn: {repr(e)}")
         return False
     return True
 
@@ -155,6 +234,18 @@ def compose(path: str) -> bool:
 
     if not generate_functions(contents_json):
         debug("Message type send function generation failed")
+        return False
+
+    if not generate_machine_format_arrays(contents_json):
+        debug("Machine readable format spec generation failed")
+        return False
+
+    if not generate_message_type_contexts(contents_json):
+        debug("Message type context generation failed")
+        return False
+    
+    if not generate_register_msgspec_fn(contents_json):
+        debug("tbi_register_msgspec function generation failed")
         return False
 
     if not generate_finalize():
