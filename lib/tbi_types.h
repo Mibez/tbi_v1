@@ -26,7 +26,7 @@ typedef struct tbi_msg_node {
 } tbi_msg_node;
 
 /** @brief Binary message format types */
-typedef enum uint8_t {
+typedef enum {
   TBI_TIMEDIFF_S  = 0,
   TBI_TIMEDIFF_MS = 1,
   TBI_UINT8       = 2,
@@ -39,7 +39,7 @@ typedef enum uint8_t {
 
 /** @brief Telemetry context for each message type, including a buffer */
 typedef struct {
-  int msgtype;                /** @brief Message type @ref msgspec_types_t */
+  uint8_t msgtype;                /** @brief Message type @ref msgspec_types_t */
   bool dcb;                   /** @brief Should these messages be bundled or not */
   int raw_size;               /** @brief Message size when storing into buffer */
   int format_len;             /** @brief Size of the binary message format specifier */

@@ -43,6 +43,8 @@ int tbi_buf_push_back(tbi_msg_ctx_t *msg_ctx, int buflen, void* buf)
             index++;
         }
         curr->next = new;
+        msg_ctx->buflen++;
+
     }
 
     return 0;
