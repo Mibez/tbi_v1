@@ -7,14 +7,14 @@ VERBOSE = False
 OUT_PATH = "./generated/messagespec.h"
 
 TYPES = {
-    0: "timediff_s",
-    1: "timediff_ms",
-    2: "uint8_t",
-    3: "int8_t",
-    4: "uint16_t",
-    5: "int16_t",
-    6: "uint32_t",
-    7: "int32_t",
+    0: "timediff_s  ",
+    1: "timediff_ms ",
+    2: "uint8_t     ",
+    3: "int8_t      ",
+    4: "uint16_t    ",
+    5: "int16_t     ",
+    6: "uint32_t    ",
+    7: "int32_t     ",
 }
 
 def debug(line: str):
@@ -159,11 +159,13 @@ def generate_message_type_contexts(spec: dict, path: str = OUT_PATH) -> bool:
             v: dict
             for k, v in spec.items():
                 f.write("\t{\n")
-                f.write(f"\t\t.msgtype = {k.upper()},\n")
-                f.write(f"\t\t.format_len = sizeof(msgspec_binary_{k}) / sizeof(uint8_t),\n")
-                f.write(f"\t\t.format = &msgspec_binary_{k}[0],\n")
-                f.write(f"\t\t.buflen = 0,\n")
-                f.write(f"\t\t.head = NULL,\n")
+                f.write(f"\t\t.msgtype      = {k.upper()},\n")
+                f.write(f"\t\t.dcb          = {'true' if bool(v.get('bundle', False)) else 'false'},\n")
+                f.write(f"\t\t.raw_size     = sizeof(msgspec_{k}_t),\n")
+                f.write(f"\t\t.format_len   = sizeof(msgspec_binary_{k}) / sizeof(uint8_t),\n")
+                f.write(f"\t\t.format       = &msgspec_binary_{k}[0],\n")
+                f.write(f"\t\t.buflen       = 0,\n")
+                f.write(f"\t\t.head         = NULL,\n")
                 f.write("\t},\n")
             
             f.write("};\n")
