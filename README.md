@@ -1,3 +1,5 @@
+***Work in progress! Feel free to take a peek, but don't use for anything serious :)***
+
 # TBI v1 - Telemetry Binary Interface version 1
 
 The TBI project implements a versatile and robust telemetry protocol optimized for network usage. The protocol
