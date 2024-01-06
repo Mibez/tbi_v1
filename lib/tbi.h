@@ -7,6 +7,7 @@
 #define __TBI_H
 
 #include <stdbool.h>
+#include "tbi_types.h"
 
 typedef struct {
     bool server;

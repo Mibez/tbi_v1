@@ -23,7 +23,7 @@ typedef struct tbi_msg_node {
   int   len;
   void *buf;
   struct tbi_msg_node * next;
-};
+} tbi_msg_node;
 
 /** @brief Binary message format types */
 typedef enum uint8_t {
