@@ -28,6 +28,7 @@ file(GLOB_RECURSE LIB_INC_FILES lib/include/*.h)
 install(FILES ${LIB_INC_FILES} DESTINATION include)
 
 # Build executables
+set(CMAKE_BUILD_TYPE Debug)
 add_executable(tbi_client client.c)
 target_link_libraries(tbi_client ${PROJECT_NAME})
 
