@@ -79,3 +79,18 @@ int tbi_buf_pop_front(tbi_msg_ctx_t *msg_ctx, int *buflen, void** buf)
 
     return 0;
 }
+
+/**
+ * @brief Free up memory used by message buffer
+ * 
+ * @param[in]   msg_ctx   Telemetry message buffer context for a message type
+ */
+void tbi_buf_free(tbi_msg_ctx_t *msg_ctx)
+{
+    int buflen;
+    void *buf;
+
+    while(tbi_buf_pop_front(msg_ctx, &buflen, &buf) == 0) {
+        free(buf);
+    }
+}
