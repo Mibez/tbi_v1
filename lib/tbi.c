@@ -19,20 +19,17 @@ tbi_ctx_t *tbi_init(void)
 {
     tbi_ctx_t *tbi;
     tbi = malloc(sizeof(tbi_ctx_t));
-    /* TODO: init fields */
     return tbi;
 }
 
 int tbi_client_init(tbi_ctx_t* tbi)
 {
-    tbi->server = false;
-    return 0;
+    return tbi_client_channel_open(tbi);
 }
 
 int tbi_server_init(tbi_ctx_t* tbi)
 {
-    tbi->server = true;
-    return 0;
+    return tbi_server_channel_open(tbi);
 }
 
 /**
@@ -50,7 +47,7 @@ int tbi_telemetry_schedule(tbi_ctx_t* tbi, int msg_type, void* buf)
     tbi_msg_ctx_t * ctx = NULL;
     int i;
 
-    if(tbi->server)
+    if(!tbi->channel || tbi->channel->server)
         return -1;
 
     /* Find the correct context for this message type */
@@ -81,7 +78,7 @@ int tbi_client_process(tbi_ctx_t* tbi)
     uint8_t* buf_out = NULL;
     void* buf_in = NULL;
     
-    if(tbi->server)
+    if(!tbi->channel || tbi->channel->server)
         return -1;
         
     /* Check for messages to send */
@@ -102,7 +99,7 @@ int tbi_client_process(tbi_ctx_t* tbi)
             }
 
             /* Send message through channel */
-            ret = tbi_client_channel_send_rtm(0U, ctx->msgtype, buf_out, len_out);
+            ret = tbi_client_channel_send_rtm(tbi, 0U, ctx->msgtype, buf_out, len_out);
             free(buf_out);
             if(ret != 0) {
                 return ret;
@@ -121,7 +118,21 @@ int tbi_server_process(tbi_ctx_t* tbi)
 
 void tbi_close(tbi_ctx_t* tbi)
 {
-    /* TODO: clear message buffers */
+    /* Close connection */
+    if(tbi->channel) {
+        if(tbi->channel->server) {
+            tbi_server_channel_close(tbi);
+        } else {
+            tbi_client_channel_close(tbi);
+        }
+    }
+
+    /* Clear message buffers */
+    for(int i = 0; i < tbi->msg_ctxs_len; i++) {
+        tbi_buf_free(&(tbi->msg_ctxs[i]));
+    }
+
+    /* Free main context */
     if(tbi) {
         free(tbi);
         tbi = NULL;

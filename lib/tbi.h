@@ -9,12 +9,6 @@
 #include <stdbool.h>
 #include "tbi_types.h"
 
-typedef struct {
-    bool server;
-    int msg_ctxs_len;
-    tbi_msg_ctx_t *msg_ctxs;
-} tbi_ctx_t;
-
 
 tbi_ctx_t *tbi_init(void);
 int tbi_client_init(tbi_ctx_t* tbi);
