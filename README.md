@@ -10,33 +10,23 @@ measurements or alerts, and (delta compressed) bundles of history data.
 This repository contains the TBI core library implementation, as well as example client and server implementations, and utility scripts to convert the human-readable custom telemetry message specifications to the binary format understood by the library.
 
 ## Operation principle
-The TBI protocol starts with a normal TCP handshake, followed by the protocol-specific handshake, where the client and server version compatibility is checked, and the client protocol manifest is sent to the server. The protocol manifest contains the versioned data structure definition of up to 16 different telemetry message formats, that the client is expected to send during the session (TODO: just checksum and version?). The server ensures it has the same data structure definition, and either acknowledges the handsake, or ends the handshake.
+The TBI protocol starts with a normal TCP handshake, followed by the protocol-specific handshake, where the client and server version compatibility is checked. The handshake includes the TBI protocol version, message schema version and a checksum of its machine-understandable representation, as well as the client timestamp. The server ensures it has the same message schema version, and either acknowledges the handshake request, or closes the connection.
 
-Example manifest:
+Client handshake request:
 ```
-------------------------------------------------------------------------------------------------------------- - -  -  -
-| <TBI magic> | <protocol version> | <start epoch timestamp> | <data structure version> | no. of structures | <1..16 TLV-like structures>
-------------------------------------------------------------------------------------------------------------- - -  -  -
-| 3 bytes     | 1 byte             | x bytes                 | 1 byte
+------------------------------------------------------------------------------------------------------------
+| <TBI magic> | <protocol version> | <start epoch timestamp> | <msg schema version>  | CRC16 of msg schema | 
+------------------------------------------------------------------------------------------------------------
+| 3 bytes     | 1 byte             | 8 bytes                 | 1 byte                | 2 bytes
 
-where TLV-like structure definition:
--------------------------------------------------------------------
-| structure ID | structure length | <0..N structure items (byte)> |
--------------------------------------------------------------------
-| 1 byte       | 1 byte           | N bytes
+```
+Server handshake acknowledge:
+```
+------------------------------------
+| <TBI magic> | <protocol version> |
+------------------------------------
+| 3 bytes     | 1 byte             
 
-where structure items is a nibble-size enumeration type, with the following possible values:
---------------------
-Type ID | data type 
---------------------
-0       | timediff s
-1       | timediff ms
-2       | uint8
-3       | int8
-4       | uint16
-5       | int16
-6       | uint32
-7       | int32
 ```
 
 Once the handshake has been completed, the client and server proceed to the 'streaming' mode, where the client can send telemetry in any of the agreed formats. Each message can be sent in one of two frame formats, an RTM (Real-Time Measurement) format, or a DCB (Delta-Compressed Bundle) format. The RTM frame contains the current values for the data it represents in the agreed format, while the DCB frame contains 1..N separate measurements for that message types in a delta-compressed format.
