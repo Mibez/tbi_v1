@@ -102,7 +102,7 @@ exit:
 
 int tbi_client_channel_send_rtm(tbi_ctx_t* tbi, uint8_t flags, uint8_t msgtype, uint8_t* buf, int buf_len)
 {
-    printf("DUMMY channel send RTM!\n");
+    printf("DUMMY channel send RTM: ");
     for(int i = 0; i < buf_len; i++)
     {
         printf("0x%X ", buf[i]);

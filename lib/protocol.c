@@ -54,11 +54,6 @@ int tbi_protocol_client_handshake(uint8_t *buf, uint8_t schema_version, uint16_t
     *(uint16_t*)buf_ptr = htons(schema_csum);
     len += sizeof(uint16_t);
 
-    printf("Client hshake: ");
-    for(int i = 0; i < len; i++) {
-        printf("0x%X ", buf[i]);
-    }
-    printf("\n");
     return len;
 
 }
