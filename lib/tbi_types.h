@@ -25,6 +25,17 @@ typedef struct tbi_msg_node {
   struct tbi_msg_node * next;
 } tbi_msg_node;
 
+/** @brief Channel context */
+typedef struct {
+    bool server;
+    bool connected;
+    int conn_fd;
+    int listen_fd;
+    uint64_t start_ts;
+    uint8_t *buf;
+} tbi_channel_t;
+
+
 /** @brief Binary message format types */
 typedef enum {
   TBI_TIMEDIFF_S  = 0,
@@ -47,5 +58,13 @@ typedef struct {
   int buflen;                 /** @brief Number of items in the message buffer */
   struct tbi_msg_node *head;  /** @brief Pointer to first element in the message buffer */
 } tbi_msg_ctx_t;
+
+/** @brief Main TBI library context data structure */
+typedef struct {
+    uint8_t msgspec_version;
+    int msg_ctxs_len;
+    tbi_msg_ctx_t *msg_ctxs;
+    tbi_channel_t *channel;
+} tbi_ctx_t;
 
 #endif /* __TBI_TYPES_H */
