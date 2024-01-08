@@ -5,7 +5,7 @@ import os
 
 VERBOSE = False
 OUT_PATH = "./generated/messagespec.h"
-
+VERSION = None
 TYPES = {
     0: "timediff_s  ",
     1: "timediff_ms ",
@@ -40,6 +40,7 @@ def generate_begin(path: str = OUT_PATH) -> bool:
 #include <stdlib.h>
 #include "tbi_types.h"
 #include "tbi.h"\n\n""")
+            f.write(f"#define MSGSPEC_VERSION {VERSION}\n\n")
     except Exception as e:
         print(f"Error initializing messagespec file: {repr(e)}")
         return False
@@ -187,6 +188,7 @@ def generate_register_msgspec_fn(spec: dict, path: str = OUT_PATH) -> bool:
             f.write("\n\n/** @brief register message spec with tbi context */\n")
             f.write("int tbi_register_msgspec(tbi_ctx_t* tbi)\n")
             f.write("{\n")
+            f.write("\ttbi->msgspec_version = MSGSPEC_VERSION;\n")
             f.write("\ttbi->msg_ctxs = &msgspec_ctxs[0];\n")
             f.write("\ttbi->msg_ctxs_len = msgspec_ctxs_len;\n")
             f.write("\treturn 0;\n")
@@ -210,13 +212,16 @@ def generate_finalize(path: str = OUT_PATH) -> bool:
     return True
 
 def compose(path: str) -> bool:
+    global VERSION
     debug(f"Running compose for file {path}")
-
     try:
         with open(path, "r") as f:
             contents: str = f.read()
             contents_json: dict = json.loads(contents)
-
+            if "version" not in contents_json:
+                raise KeyError("'version' not in spec")
+            VERSION = int(contents_json.pop("version"))
+            
     except Exception as e:
         print(f"Error parsing file: {repr(e)}")
         return False
