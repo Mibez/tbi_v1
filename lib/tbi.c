@@ -5,6 +5,7 @@
 
 
 #include <stdio.h>
+#include <string.h>
 #include <stdlib.h>
 #include <stdbool.h>
 
@@ -42,20 +43,31 @@ int tbi_server_init(tbi_ctx_t* tbi)
  * 
  * @return 0 on success, negative error code on failure
 */
-int tbi_telemetry_schedule(tbi_ctx_t* tbi, int msg_type, void* buf)
+int tbi_telemetry_schedule(tbi_ctx_t* tbi, int msg_type, const void* buf, int len)
 {
     tbi_msg_ctx_t * ctx = NULL;
+    uint8_t *msg_copy;
     int i;
 
     if(!tbi->channel || tbi->channel->server)
         return -1;
 
+
     /* Find the correct context for this message type */
     for(i = 0; i < tbi->msg_ctxs_len; i++) {
         ctx = &tbi->msg_ctxs[i];
         if(ctx->msgtype == msg_type) {
+
+            /* Input size must match expected */
+            if(len != ctx->raw_size)
+                return -1;
+
+            /* Copy message from user to new buffer */
+            msg_copy = (uint8_t*)malloc(sizeof(uint8_t)*len);
+            memcpy(msg_copy, buf, len);
+
             /* Store into dedicated buffer */
-            return tbi_buf_push_back(ctx, ctx->raw_size, buf);
+            return tbi_buf_push_back(ctx, ctx->raw_size, msg_copy);
         }
     }
     

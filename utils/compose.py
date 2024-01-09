@@ -110,12 +110,18 @@ def generate_functions(spec: dict, path: str = OUT_PATH) -> bool:
     debug("Generating function declarations...")
     try:
         with open(path, "a") as f:
-            f.write("/** @brief conviniency functions for sending telemetry */")
             k: str
             for k in spec.keys():
-                f.write(f"\nint tbi_send_{k}(tbi_ctx_t* tbi, msgspec_{k}_t *value)\n")
+                f.write(f"\n/** @brief Conviniency function for sending {k}\n")
+                f.write(" *\n")
+                f.write(" *  @param[in] tbi     Initialized TBI context\n")
+                f.write(" *  @param[in] value   Pointer to new telemetry message. Copied to internal buffer\n")
+                f.write(" *\n")
+                f.write(" *  @return 0 on success, or negative error code\n")
+                f.write("*/\n")
+                f.write(f"int tbi_send_{k}(tbi_ctx_t* tbi, const msgspec_{k}_t *value)\n")
                 f.write("{\n")
-                f.write(f"\treturn tbi_telemetry_schedule(tbi, {k.upper()}, (void*)value);\n")
+                f.write(f"\treturn tbi_telemetry_schedule(tbi, {k.upper()}, (void*)value, sizeof(msgspec_{k}_t));\n")
                 f.write("}\n")
 
     except Exception as e:
