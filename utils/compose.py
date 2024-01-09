@@ -6,6 +6,7 @@ import os
 VERBOSE = False
 OUT_PATH = "./generated/messagespec.h"
 VERSION = None
+MAX_ID_NUM = 15
 TYPES = {
     0: "timediff_s  ",
     1: "timediff_ms ",
@@ -64,13 +65,14 @@ def generate_enum(spec: dict, path: str = OUT_PATH) -> bool:
                 if id_num < 0:
                     print(f"Error: No id field for messagespec {k}")
                     return False
+                elif id_num > MAX_ID_NUM:
+                    print(f"Error: ID value for {k} too large! Max: {MAX_ID_NUM}")
+                    return False
                 f.write(f"  {k.upper()} = {id_num},\n")
                 if v.get("bundle", False):
                     bundles.append(k.upper())
             f.write("} msgspec_types_t;\n\n")
             f.write(f"const int msgspec_types_len = {len(spec.keys())};\n")
-            f.write(f"const int msgspec_bundle_types_len = {len(bundles)};\n")
-            f.write(f"const uint8_t msgspec_bundle_types = {{ {','.join(bundles)} }};\n")
 
     except Exception as e:
         print(f"Error in generate_enum: {repr(e)}")
