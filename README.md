@@ -1,4 +1,4 @@
-***Work in progress! Feel free to take a peek, but don't use for anything serious :)***
+***Work in progress! Feel free to try it out, but don't use for anything serious :)***
 
 # TBI v1 - Telemetry Binary Interface version 1
 
@@ -8,6 +8,22 @@ of connectivity, where the cost of communication is a limiting factor. The proto
 measurements or alerts, and (delta compressed) bundles of history data.
 
 This repository contains the TBI core library implementation, as well as example client and server implementations, and utility scripts to convert the human-readable custom telemetry message specifications to the binary format understood by the library.
+
+## Project status
+
+**Implemented:**
+* Message spec code generation from JSON
+* Sending RTM messages (client)
+* Receiving RTM messages from a single client (server)
+* Example client and server
+
+**To be implemented:**
+* Sending/receiving DCB messages
+* DCB message compression
+* Multi-client support on server
+* Command line parameters or configuration file
+* Thread-safety
+* TLS
 
 ## Operation principle
 The TBI protocol starts with a normal TCP handshake, followed by the protocol-specific handshake, where the client and server version compatibility is checked. The handshake includes the TBI protocol version, message schema version and a checksum of its machine-understandable representation, as well as the client timestamp. The server ensures it has the same message schema version, and either acknowledges the handshake request, or closes the connection.
