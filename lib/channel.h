@@ -16,7 +16,7 @@ int tbi_client_channel_send_dcb(tbi_ctx_t* tbi);
 void tbi_client_channel_close(tbi_ctx_t* tbi);
 
 int tbi_server_channel_open(tbi_ctx_t* tbi);
-int tbi_server_register_cb(tbi_ctx_t* tbi);
+int tbi_server_channel_recv(tbi_ctx_t* tbi);
 void tbi_server_channel_close(tbi_ctx_t* tbi);
 
 #endif /* __TBI_SERIALIZER_H */

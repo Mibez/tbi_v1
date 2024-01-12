@@ -9,6 +9,17 @@
 #include <stdint.h>
 #include <stdbool.h>
 
+#define TBI_FLAGS_NONE  (0)
+#define TBI_FLAGS_RTM   (1)
+#define TBI_FLAGS_DCB   (1 << 1)
+
+/** @brief Message reception callback. 
+ * Will be called with message type, the message itself (must be copied
+ * to user context), and optional user context
+ */
+typedef void(*tbi_msg_callback)(const int message_type, const void* msg, void* userdata);
+
+
 /** @brief Type for storing time difference of full seconds, 32-bit */
 typedef uint32_t timediff_s;
 
@@ -50,13 +61,15 @@ typedef enum {
 
 /** @brief Telemetry context for each message type, including a buffer */
 typedef struct {
-  uint8_t msgtype;                /** @brief Message type @ref msgspec_types_t */
+  uint8_t msgtype;            /** @brief Message type @ref msgspec_types_t */
   bool dcb;                   /** @brief Should these messages be bundled or not */
   int raw_size;               /** @brief Message size when storing into buffer */
   int format_len;             /** @brief Size of the binary message format specifier */
   const uint8_t * format;     /** @brief Array of @ref tbi_msg_field_types_t for this format */
   int buflen;                 /** @brief Number of items in the message buffer */
   struct tbi_msg_node *head;  /** @brief Pointer to first element in the message buffer */
+  tbi_msg_callback cb;        /** @brief Message reception callback for this message type */
+  void* cb_userdata;          /** @brief Optional user context associated with the callback */
 } tbi_msg_ctx_t;
 
 /** @brief Main TBI library context data structure */
@@ -65,6 +78,8 @@ typedef struct {
     int msg_ctxs_len;
     tbi_msg_ctx_t *msg_ctxs;
     tbi_channel_t *channel;
+    tbi_msg_callback global_cb;
+    void* global_cb_userdata;
 } tbi_ctx_t;
 
 #endif /* __TBI_TYPES_H */

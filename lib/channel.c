@@ -21,6 +21,12 @@
 #define TBI_DEFAULT_PORT 8000U
 #define TBI_MAX_CLIENTS 1U
 
+/** @brief Connect to server (blocking)
+ * 
+ * @param[in]  tbi     TBI context
+ * 
+ * @return 0 on success, or a negative error value
+ */
 int tbi_client_channel_open(tbi_ctx_t* tbi)
 {
     struct sockaddr_in address;
@@ -98,16 +104,43 @@ exit_channel_allocated:
     free(tbi->channel);
 exit:    
     tbi->channel = NULL;
-    return -1;}
+    return -1;
+}
 
+/** @brief Send RTM message to server
+ * 
+ * @param[in]  tbi     TBI context
+ * @param[in]  flags   Message flags
+ * @param[in]  msgtype Message type
+ * @param[in]  buf     Buffer containing the message
+ * @param[in]  buf_len Buffer length
+ * 
+ * @return 0 on success, or a negative error value
+ */
 int tbi_client_channel_send_rtm(tbi_ctx_t* tbi, uint8_t flags, uint8_t msgtype, uint8_t* buf, int buf_len)
 {
-    printf("DUMMY channel send RTM: ");
-    for(int i = 0; i < buf_len; i++)
-    {
-        printf("0x%X ", buf[i]);
-    }
+    int ret;
+
+    if(!tbi || !tbi->channel || !tbi->channel->connected)
+        return -1;
+
+    /* Set flags to first byte (RTM/DCB) */
+    if((ret = tbi_set_client_flags(buf, TBI_FLAGS_RTM)) != 0)
+        return -1;
+
+    /* Debug */
+    printf("Channel sending RTM: ");
+    for(int i = 0; i < buf_len; i++) { printf("0x%X ", buf[i]); }
     printf("\n");
+
+    /* Send it */
+    if((ret = write(tbi->channel->conn_fd, buf, buf_len)) < buf_len) {
+        if(ret < 0)
+            perror("Error writing to socket");
+        return -1;
+    }
+    printf("...Sent!\n");
+
     return 0;
 }
 
@@ -117,6 +150,7 @@ int tbi_client_channel_send_dcb(tbi_ctx_t* tbi)
     return 0;
 }
 
+/** @brief Close connection, free resources */
 void tbi_client_channel_close(tbi_ctx_t* tbi)
 {
     if(tbi->channel) {
@@ -132,6 +166,12 @@ void tbi_client_channel_close(tbi_ctx_t* tbi)
     }
 }
 
+/** @brief Open socket and wait for a client to connect (blocking)
+ * 
+ * @param[in]  tbi     TBI context
+ * 
+ * @return 0 on success, or a negative error value
+ */
 int tbi_server_channel_open(tbi_ctx_t* tbi)
 {
     struct sockaddr_in address;
@@ -178,10 +218,8 @@ int tbi_server_channel_open(tbi_ctx_t* tbi)
         goto exit_listen_socket_opened;
     }
 
-
     printf("Client connected!\n");
     tbi->channel->connected = true;
-
 
     /* Receive client handshake */
     len = read(tbi->channel->conn_fd, tbi->channel->buf, TBI_CHANNEL_MTU);
@@ -224,12 +262,32 @@ exit:
     return -1;
 }
 
-int tbi_server_register_cb(tbi_ctx_t* tbi)
+/** @brief Receive a message from client (blocking)
+ * 
+ * @param[in]  tbi     TBI context
+ * 
+ * @return Number of bytes received
+ */
+int tbi_server_channel_recv(tbi_ctx_t* tbi)
 {
-    printf("DUMMY server register cb!\n");
-    return 0;
+    int len;
+
+    /* Receive message from client */
+    printf("Server receiving...\n");
+    len = read(tbi->channel->conn_fd, tbi->channel->buf, TBI_CHANNEL_MTU);
+    if(len < 0) {
+        perror("Error reading from socket");
+    }
+    
+    /* Debug */
+    printf("Received: %d: \n", len);
+    for(int i = 0; i < len; i++) { printf("0x%X ", tbi->channel->buf[i]);}
+    printf("\n");
+
+    return len;
 }
 
+/** @brief Close connection, free up resources */
 void tbi_server_channel_close(tbi_ctx_t* tbi)
 {
     if(tbi->channel) {

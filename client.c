@@ -1,3 +1,9 @@
+/**
+* @file     client.c
+* @brief    Example simple TBI client implementation. Run utils/compose.py on utils/example.json
+*           before compiling 
+*/
+
 #include <stdio.h>
 #include <stdlib.h>
 

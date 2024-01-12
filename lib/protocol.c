@@ -11,6 +11,38 @@
 
 #define ARRAY_SIZE(x) (sizeof(x) / sizeof((x)[0]))
 
+/** @brief Set flags to an outgoing message
+ * 
+ * @param[out]  buf     Buffer where the flags will be set in the first byte
+ * @param[in]   flags   The flags to set
+ * 
+ * @return 0 on success, or a negative error value
+ */
+int tbi_set_client_flags(uint8_t *buf, uint8_t flags)
+{
+    if(!buf) return -1;
+    *buf |= (flags << 4);
+    return 0;
+}
+
+/** @brief Get flags and message type from an incoming message
+ * 
+ * @param[in]   buf         Buffer where the flags will be set in the first byte
+ * @param[out]  flags       Flags from message
+ * @param[out]  msgtype     Message type from message
+ * 
+ * @return 0 on success, or a negative error value
+ */
+int tbi_get_client_flags(uint8_t *buf, uint8_t *flags, uint8_t *msgtype)
+{
+    if(!buf) return -1;
+    *flags = ((*buf) >> 4) & 0xF;
+    *msgtype = (*buf) & 0xF;
+    return 0;
+}
+
+
+
 /** @brief Form the client handshake message
  * 
  * @param[out] buf              Buffer to write the outgoing message

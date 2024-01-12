@@ -175,6 +175,8 @@ def generate_message_type_contexts(spec: dict, path: str = OUT_PATH) -> bool:
                 f.write(f"\t\t.format       = &msgspec_binary_{k}[0],\n")
                 f.write(f"\t\t.buflen       = 0,\n")
                 f.write(f"\t\t.head         = NULL,\n")
+                f.write(f"\t\t.cb           = NULL,\n")
+                f.write(f"\t\t.cb_userdata  = NULL,\n")
                 f.write("\t},\n")
             
             f.write("};\n")
