@@ -28,7 +28,7 @@ uint16_t crc16(uint16_t crc, uint8_t new_val)
 
 		if (((crc & 0x8000) >> 8) ^ (new_val & 0x80)){
 			crc = (crc << 1)  ^ POLYNOMIAL_CRC16_CCITT;
-		}else {
+		} else {
 			crc = (crc << 1);
 		}
 

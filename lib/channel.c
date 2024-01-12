@@ -280,7 +280,7 @@ int tbi_server_channel_recv(tbi_ctx_t* tbi)
     }
     
     /* Debug */
-    printf("Received: %d: \n", len);
+    printf("Received %d bytes: ", len);
     for(int i = 0; i < len; i++) { printf("0x%X ", tbi->channel->buf[i]);}
     printf("\n");
 

@@ -214,7 +214,7 @@ int tbi_server_process(tbi_ctx_t* tbi)
         if(ctx->buflen >= 1 && !ctx->dcb) {
 
             /* Pull messages from buffer */
-            while((ret = tbi_buf_pop_front(ctx, &len_in, &buf_in)) != 0) {
+            while((ret = tbi_buf_pop_front(ctx, &len_in, &buf_in)) == 0) {
 
                 /* Deserialize to a native byte stream */
                 ret = tbi_deserialize_rtm(ctx->format, ctx->format_len, (uint8_t*)buf_in, len_in, (void**)&buf_out, &len_out);
