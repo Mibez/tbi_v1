@@ -20,20 +20,33 @@ int msg_field_type_len(tbi_msg_field_types_t field_type)
     switch (field_type)
     {
         case TBI_TIMEDIFF_S:
-        case TBI_TIMEDIFF_MS:
-        case TBI_UINT32:
         case TBI_INT32:
             return sizeof(uint32_t);
-        case TBI_UINT8:
-        case TBI_INT8:
-            return sizeof(uint8_t);
+        case TBI_TIMEDIFF_MS:
         case TBI_UINT16:
         case TBI_INT16:
             return sizeof(uint16_t);
+        case TBI_UINT8:
+        case TBI_INT8:
+            return sizeof(uint8_t);
         default:
             return 0;
     }
 }
+
+bool is_signed(tbi_msg_field_types_t field_type)
+{
+    switch (field_type)
+    {
+    case TBI_INT32:
+    case TBI_INT16:
+    case TBI_INT8:
+        return true;    
+    default:
+        return false;
+    }
+}
+
 
 /** @brief Compute a checksum for the message spec
  * 
