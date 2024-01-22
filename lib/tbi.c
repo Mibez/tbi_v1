@@ -15,6 +15,7 @@
 #include "serializer.h"
 #include "protocol.h"
 #include "channel.h"
+#include "utils.h"
 
 
 tbi_ctx_t *tbi_init(void)
@@ -31,7 +32,18 @@ tbi_ctx_t *tbi_init(void)
 
 int tbi_client_init(tbi_ctx_t* tbi)
 {
-    return tbi_client_channel_open(tbi);
+    tbi_msg_ctx_t * ctx = NULL;
+    int ret, i;
+
+    if((ret = tbi_client_channel_open(tbi)) != 0)
+        return ret;
+
+    /* Set last sent timestamp to msg contexts */
+    for(i = 0; i < tbi->msg_ctxs_len; i++) {
+        ctx = &tbi->msg_ctxs[i];
+        ctx->last_sent_ms = tbi->channel->start_ts;
+    }
+    return 0;
 }
 
 int tbi_server_init(tbi_ctx_t* tbi)
@@ -53,7 +65,7 @@ int tbi_telemetry_schedule(tbi_ctx_t* tbi, int msg_type, const void* buf, int le
 {
     tbi_msg_ctx_t * ctx = NULL;
     uint8_t *msg_copy;
-    int i;
+    int i, ret;
 
     if(!tbi || !tbi->channel || tbi->channel->server)
         return -1;
@@ -73,7 +85,9 @@ int tbi_telemetry_schedule(tbi_ctx_t* tbi, int msg_type, const void* buf, int le
             memcpy(msg_copy, buf, len);
 
             /* Store into dedicated buffer */
-            return tbi_buf_push_back(ctx, ctx->raw_size, msg_copy);
+            ret = tbi_buf_push_back(ctx, ctx->raw_size, msg_copy);
+            printf("scheduled msg type %d, len %d, buflen: %d\n", msg_type, len, ctx->buflen);
+            return ret;
         }
     }
     
@@ -92,25 +106,33 @@ int tbi_telemetry_schedule(tbi_ctx_t* tbi, int msg_type, const void* buf, int le
 int tbi_client_process(tbi_ctx_t* tbi)
 {
     tbi_msg_ctx_t * ctx = NULL;
-    int i, len_in, len_out, ret;
+    uint64_t curr_time;
+    int i, j, len_in, len_out, len_copy, ret;
     uint8_t* buf_out = NULL;
     void* buf_in = NULL;
+    void **dcb_bufs = NULL;
+    int *dcb_buf_lens = NULL;
     
     if(!tbi ||!tbi->channel || tbi->channel->server)
         return -1;
-        
+    
+    curr_time = get_current_time_ms();
+
     /* Check for messages to send */
     for(i = 0; i < tbi->msg_ctxs_len; i++) {
         ctx = &tbi->msg_ctxs[i];
-        if(ctx->buflen >= 1 && !ctx->dcb) {
-            
+        if(ctx->buflen == 0)
+            continue;
+
+        if(!ctx->dcb) {
+            /* RTM */
             /* Pull message from buffer */
             ret = tbi_buf_pop_front(ctx, &len_in, &buf_in);
             if(ret != 0) 
                 return ret;
-
+                    
             /* Serialize to a platform-agnostic byte stream */
-            ret = tbi_serialize_rtm(ctx->format, ctx->msgtype, ctx->format_len, buf_in, len_in, &buf_out, &len_out);
+            ret = tbi_serialize_rtm(ctx->format, ctx->format_len, ctx->msgtype, buf_in, len_in, &buf_out, &len_out);
             free(buf_in);
             if(ret != 0) {
                 return ret;
@@ -123,6 +145,51 @@ int tbi_client_process(tbi_ctx_t* tbi)
                 return ret;
             }
             return 1;
+        } else {
+            /* DCB */
+            /* Check if it's time to send this msgtype based on send interval */
+            if((curr_time - ctx->last_sent_ms) < ctx->interval)
+                continue;
+            
+            /* Allocate memory to store pointers to buffers */
+            dcb_bufs = (void**)malloc(ctx->buflen * sizeof(void*));
+            if(!dcb_bufs)
+                return -1;
+
+            /* ...and their lengths */
+            dcb_buf_lens = (int*)malloc(ctx->buflen * sizeof(int));
+            if(!dcb_buf_lens) {
+                free(dcb_bufs);
+                return -1;
+            }
+
+            /* Pull messages from buffer */
+            len_in = 0;
+            len_copy = ctx->buflen;
+            for(j = 0; j < len_copy; j++) {
+                if((ret = tbi_buf_pop_front(ctx, &dcb_buf_lens[j], &dcb_bufs[j])) < 0)
+                    break;
+
+                len_in++;
+            }
+
+            /* Serialize */
+            if((ret = tbi_serialize_dcb(ctx->format, ctx->format_len, ctx->msgtype, dcb_bufs, dcb_buf_lens, len_in, tbi->channel->buf, &len_out)) != 0) {              
+                free(dcb_bufs);
+                free(dcb_buf_lens);
+                return -1;
+            }
+
+            /* Send */
+            ret = tbi_client_channel_send_dcb(tbi, 0U, ctx->msgtype, tbi->channel->buf, len_out);
+            if(ret != 0) {
+                return ret;
+            }
+            return len_in;
+
+            ctx->last_sent_ms = curr_time;
+            free(dcb_bufs);
+            free(dcb_buf_lens);
         }
     }
     return 0;
