@@ -37,7 +37,7 @@ int tbi_client_channel_open(tbi_ctx_t* tbi)
     if(!tbi->channel)
         goto exit;
 
-    /* Allocate buffer for stored data */
+    /* Allocate a send buffer for serializing data */
     tbi->channel->buf = (uint8_t*)malloc(TBI_CHANNEL_MTU * sizeof(uint8_t));
     if(!tbi->channel->buf)
         goto exit_channel_allocated;
@@ -144,9 +144,30 @@ int tbi_client_channel_send_rtm(tbi_ctx_t* tbi, uint8_t flags, uint8_t msgtype, 
     return 0;
 }
 
-int tbi_client_channel_send_dcb(tbi_ctx_t* tbi)
+int tbi_client_channel_send_dcb(tbi_ctx_t* tbi, uint8_t flags, uint8_t msgtype, uint8_t* buf, int buf_len)
 {
-    printf("DUMMY channel send DCB!\n");
+    int ret;
+
+    if(!tbi || !tbi->channel || !tbi->channel->connected)
+        return -1;
+
+    /* Set flags to first byte (RTM/DCB) */
+    if((ret = tbi_set_client_flags(buf, TBI_FLAGS_DCB)) != 0)
+        return -1;
+
+    /* Debug */
+    printf("Channel sending DCB: ");
+    for(int i = 0; i < buf_len; i++) { printf("0x%X ", buf[i]); }
+    printf("\n");
+
+    /* Send it */
+    if((ret = write(tbi->channel->conn_fd, buf, buf_len)) < buf_len) {
+        if(ret < 0)
+            perror("Error writing to socket");
+        return -1;
+    }
+    printf("...Sent!\n");
+
     return 0;
 }
 

@@ -12,7 +12,7 @@
 
 int tbi_client_channel_open(tbi_ctx_t* tbi);
 int tbi_client_channel_send_rtm(tbi_ctx_t* tbi, uint8_t flags, uint8_t msgtype, uint8_t* buf, int buf_len);
-int tbi_client_channel_send_dcb(tbi_ctx_t* tbi);
+int tbi_client_channel_send_dcb(tbi_ctx_t* tbi, uint8_t flags, uint8_t msgtype, uint8_t* buf, int buf_len);
 void tbi_client_channel_close(tbi_ctx_t* tbi);
 
 int tbi_server_channel_open(tbi_ctx_t* tbi);
