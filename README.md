@@ -63,10 +63,10 @@ The frame begins with an RTM frame representing the initial value of the structu
 | 1 nibble | 1 nibble  | N bytes                        | N bytes
 
 where <bundle data is> 1..N of:
-----------------------------------------------------------------------------------------------
-| no. of values in current format | format spec len | <format spec> | stuffing      | <data> |
-----------------------------------------------------------------------------------------------
-| 1 byte                          | 1 byte          | N bytes       | byte align    | N bytes
+-------------------------------------------------------------
+| no. of values in current format | <format spec> |  <data> |
+-------------------------------------------------------------
+| 1 byte                          | N bytes       | N bytes
 
 where format spec is:
 ---------------------------------------------------------------------
@@ -75,10 +75,10 @@ where format spec is:
 | 6 bits                          | 6 bits
 
 and finally the data, represented in the number of bits as defined by format spec
-------------------------------------------------------------- - -  -  -
-| struct member 0 | struct member 1 | ... | struct member N | struct member 0 ...
-------------------------------------------------------------- - -  -  -
-| 0-32 bits       | 0-32 bits       | ... | 0-32 bits       | 0-32 bits
+------------------------------------------------------------------------------ - -  -  -
+| diff direction | struct member 0 | struct member 1 | ... | struct member N | diff direction | struct member 0 ...
+------------------------------------------------------------------------------ - -  -  -
+| N bits         | 0-32 bits       | ... | 0-32 bits       | 0-32 bits
 ```
 
 The DCB frame format may be changed mid-frame with a new definition. This allows for representing non-changing periods of time series data very efficiently, with an entire data structure represented by only the time difference, or even 0 bits, if timestamp is not a member of the data. The TBI frame constructor automatically chooses the frame formats to send the data in least number of bits
