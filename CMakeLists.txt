@@ -34,3 +34,6 @@ target_link_libraries(tbi_client ${PROJECT_NAME})
 
 add_executable(tbi_server server.c)
 target_link_libraries(tbi_server ${PROJECT_NAME})
+
+add_executable(test_bitmagic test/test_bitmagic.c)
+target_link_libraries(test_bitmagic ${PROJECT_NAME})
