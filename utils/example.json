@@ -4,7 +4,7 @@
         "bundle": false,
         "id": 0,
         "data_types": {
-            "time": 0,
+            "time_s": 0,
             "temp": 7,
             "hum": 2
         }
@@ -13,11 +13,12 @@
         "bundle": true,
         "id": 1,
         "data_types": {
-            "time": 1,
+            "time_s": 0,
+            "time_ms": 1,
             "acc_x": 7,
             "acc_y": 7,
             "acc_z": 7
         },
-        "send_interval": 10000
+        "send_interval": 1000
     }
 }

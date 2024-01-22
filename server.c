@@ -33,9 +33,9 @@ void receive_temp_and_hum(const int msgtype, const void* buf, void* userdata)
     
     th = (msgspec_temp_and_hum_t*)buf;
     printf("Received temperature and humidity!:\n");
-    printf("    time: %u (0x%X)\n", th->time, th->time);
+    printf("    time: %d (0x%X)\n", th->time_s, th->time_s);
     printf("    temp: %d (0x%X)\n", th->temp, th->temp);
-    printf("    temp: %u (0x%X)\n", th->hum, th->hum);
+    printf("    temp: %d (0x%X)\n", th->hum, th->hum);
     printf("            Server magic: 0x%X\n\n", ctx->magic);
 }
 

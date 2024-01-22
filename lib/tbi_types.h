@@ -23,11 +23,8 @@ typedef void(*tbi_msg_callback)(const int message_type, const void* msg, void* u
 /** @brief Type for storing time difference of full seconds, 32-bit */
 typedef uint32_t timediff_s;
 
-/** @brief Type for storing time difference of seconds and milliseconds, in 32 bits*/
-typedef struct {
-  uint32_t seconds: 22;  
-  uint32_t ms: 10;  
-} timediff_ms;
+/** @brief Type for storing time difference of milliseconds, in 16 bits */
+typedef uint16_t timediff_ms;
 
 /** @brief Telemetry message linked list element */
 typedef struct tbi_msg_node {
@@ -70,6 +67,8 @@ typedef struct {
   struct tbi_msg_node *head;  /** @brief Pointer to first element in the message buffer */
   tbi_msg_callback cb;        /** @brief Message reception callback for this message type */
   void* cb_userdata;          /** @brief Optional user context associated with the callback */
+  uint64_t interval;          /** @brief Send interval in ms for DCB messages */
+  uint64_t last_sent_ms;      /** @brief Time when this msgtype was last sent */
 } tbi_msg_ctx_t;
 
 /** @brief Main TBI library context data structure */

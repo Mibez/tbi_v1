@@ -91,7 +91,7 @@ def generate_structs(spec: dict, path: str = OUT_PATH) -> bool:
             k: str
             v: dict
             for k,v in spec.items():
-                f.write("typedef struct {\n")
+                f.write("typedef struct __attribute__((__packed__)) {\n")
                 for typename, datatype in v.get("data_types", {}).items():
                     if datatype not in TYPES:
                         print(f"Error in struct generation for {k}: unknown type {datatype}")
@@ -177,6 +177,8 @@ def generate_message_type_contexts(spec: dict, path: str = OUT_PATH) -> bool:
                 f.write(f"\t\t.head         = NULL,\n")
                 f.write(f"\t\t.cb           = NULL,\n")
                 f.write(f"\t\t.cb_userdata  = NULL,\n")
+                f.write(f"\t\t.interval     = {int(v.get('send_interval', 0))}U,\n")
+                f.write(f"\t\t.last_sent_ms = 0U,\n")
                 f.write("\t},\n")
             
             f.write("};\n")
